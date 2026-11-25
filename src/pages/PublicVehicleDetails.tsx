@@ -24,6 +24,7 @@ import {
   type Vehicle,
   type VehicleStatus,
 } from "../types/vehicle";
+import { API_BASE_URL } from "../config/api";
 
 interface VehicleResponse {
   success: boolean;
@@ -31,7 +32,7 @@ interface VehicleResponse {
   vehicle: Vehicle;
 }
 
-const API_URL = "http://localhost:5000/api/vehicles";
+const API_URL = `${API_BASE_URL}/vehicles`;
 
 const marketFont = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap');

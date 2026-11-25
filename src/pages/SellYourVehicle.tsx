@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { fetchBrands, fetchCategories } from "../services/categoryBrandApi";
 import type { Brand, Category } from "../types/categoryBrand";
+import { API_BASE_URL } from "../config/api";
 
 /* Vehicle images (src/assets/VehicleTypes) */
 import miniTrucksImg from "../assets/VehicleTypes/Mini Trucks.png";
@@ -37,7 +38,6 @@ import trailersImg from "../assets/VehicleTypes/Trailers.png";
 import transitMixersImg from "../assets/VehicleTypes/Transit Mixers.png";
 import truckImg from "../assets/VehicleTypes/Truck.png";
 
-const API_BASE_URL = "http://localhost:5000/api";
 const MAX_IMAGES = 8;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 

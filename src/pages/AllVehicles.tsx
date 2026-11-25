@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import bg2 from "../assets/admindashboard/bg2.png";
 import { adminFetch } from "../services/adminAuth";
 import { getVehicleCategoryLabel, type Vehicle } from "../types/vehicle";
+import { API_BASE_URL } from "../config/api";
 
 interface VehiclesResponse {
   success: boolean;
@@ -21,7 +22,7 @@ interface VehiclesResponse {
   vehicles: Vehicle[];
 }
 
-const API_URL = "http://localhost:5000/api/vehicles";
+const API_URL = `${API_BASE_URL}/vehicles`;
 const card =
   "rounded-2xl border border-[#efeae0] bg-white shadow-[0_1px_2px_rgba(20,16,8,0.04),0_14px_34px_-22px_rgba(20,16,8,0.18)]";
 

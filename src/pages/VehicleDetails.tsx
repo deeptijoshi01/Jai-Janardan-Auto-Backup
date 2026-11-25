@@ -21,6 +21,7 @@ import {
 import { fetchBrands, fetchCategories } from "../services/categoryBrandApi";
 import { adminFetch } from "../services/adminAuth";
 import type { Brand, Category, VehicleCategoryType } from "../types/categoryBrand";
+import { API_BASE_URL } from "../config/api";
 
 interface VehicleResponse {
   success: boolean;
@@ -32,7 +33,7 @@ interface VehicleDetailsProps {
   mode: "view" | "edit";
 }
 
-const API_URL = "http://localhost:5000/api/vehicles";
+const API_URL = `${API_BASE_URL}/vehicles`;
 const inputClass =
   "h-12 w-full rounded-xl border border-[#e6e1d6] bg-[#fdfcf9] px-4 text-sm text-[#14110a] outline-none transition focus:border-[#c9a050] focus:bg-white focus:ring-4 focus:ring-[#c9a050]/15";
 const fuelTypes = ["Diesel", "Petrol", "CNG", "Electric", "Other"];

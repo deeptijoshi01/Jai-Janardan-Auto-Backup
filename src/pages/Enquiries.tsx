@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, Loader2, MessageSquare, Phone, RefreshCw } from "lucide-react";
 import { adminFetch } from "../services/adminAuth";
+import { API_BASE_URL } from "../config/api";
 
 interface Enquiry {
   _id: string;
@@ -12,7 +13,7 @@ interface Enquiry {
   createdAt: string;
 }
 
-const API_URL = "http://localhost:5000/api/enquiries";
+const API_URL = `${API_BASE_URL}/enquiries`;
 
 const Enquiries = () => {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);

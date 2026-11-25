@@ -19,6 +19,7 @@ import VehicleTypes from "./components/vehicles/VehicleTypes";
 import { fallbackVehicles } from "./data/vehicleFallback";
 
 import type { Vehicle } from "./types/vehicle";
+import { API_BASE_URL } from "./config/api";
 
 /* ================================================================ */
 /* ADMIN IMPORTS                                                     */
@@ -75,8 +76,7 @@ const AdminSellRequests = lazy(
 /* API                                                               */
 /* ================================================================ */
 
-const VEHICLES_API_URL =
-  "http://localhost:5000/api/vehicles";
+const VEHICLES_API_URL = `${API_BASE_URL}/vehicles`;
 
 /* ================================================================ */
 /* PUBLIC PAGE LOADING                                               */

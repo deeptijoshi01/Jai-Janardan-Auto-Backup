@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 
 import heroImage from "../assets/heo-bg.png";
+import { API_BASE_URL } from "../config/api";
 
 /* -------------------------------------------------------------------------- */
 /*  CONFIG                                                                    */
@@ -20,8 +21,6 @@ import heroImage from "../assets/heo-bg.png";
 
 // Contact form submit zalyavar enquiry ya number var WhatsApp madhe janar.
 const ENQUIRY_WHATSAPP = "8378913269";
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 // Google Maps share link (Get Directions button sathi).
 const MAPS_URL = "https://maps.app.goo.gl/oU7sCXnYKYz47Guf9";

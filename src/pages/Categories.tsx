@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { fetchBrands, fetchCategories } from "../services/categoryBrandApi";
 import { adminFetch } from "../services/adminAuth";
+import { API_BASE_URL } from "../config/api";
 import {
   brandCategoryTypeFor,
   type Brand,
@@ -18,7 +19,7 @@ import {
   type VehicleCategoryType,
 } from "../types/categoryBrand";
 
-const API_URL = "http://localhost:5000/api/brands";
+const API_URL = `${API_BASE_URL}/brands`;
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>([]);

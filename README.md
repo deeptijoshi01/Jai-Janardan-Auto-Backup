@@ -14,10 +14,11 @@ The seed script creates a batch of realistic commercial-vehicle listings and mar
 
 ## Local front-end and API
 
-The frontend uses `VITE_API_BASE_URL` for authentication API calls. Copy the
-root `.env.example` to `.env` when the API is not at the local default, and set
-it to the API base URL ending in `/api`. Configure the matching frontend origin
-as `FRONTEND_URL` in `backend/.env`.
+The frontend uses `VITE_API_BASE_URL` as the backend origin. Copy the root
+`.env.example` to `.env` to configure the production backend; the frontend
+appends `/api` automatically. During development, the backend origin defaults
+to `http://localhost:5000` when this variable is unset. Configure the matching
+frontend origin as `FRONTEND_URL` in `backend/.env`.
 
 ```bash
 npm install

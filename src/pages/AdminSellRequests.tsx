@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { adminFetch } from "../services/adminAuth";
 import { fetchBrands } from "../services/categoryBrandApi";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "http://localhost:5000/api/sell-requests";
+const API_URL = `${API_BASE_URL}/sell-requests`;
 const MAX_IMAGES = 8;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 type RequestStatus = "pending" | "under_review" | "approved_manual" | "listing" | "listed" | "rejected";
@@ -495,7 +496,7 @@ function ListingDialog({
       if (addedFiles.length) {
         const formData = new FormData();
         addedFiles.forEach((image) => formData.append("images", image.file as File));
-        const uploadResponse = await adminFetch("http://localhost:5000/api/admin/upload-multiple", { method: "POST", body: formData });
+        const uploadResponse = await adminFetch(`${API_BASE_URL}/admin/upload-multiple`, { method: "POST", body: formData });
         const uploadData = (await uploadResponse.json().catch(() => null)) as { success?: boolean; message?: string; images?: SellImage[] } | null;
         if (!uploadResponse.ok || !uploadData?.success || !Array.isArray(uploadData.images) || uploadData.images.length !== addedFiles.length) {
           throw new Error(uploadData?.message || "Unable to upload listing images.");

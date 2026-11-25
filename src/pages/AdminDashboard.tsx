@@ -22,6 +22,7 @@ import {
 import bg1 from "../assets/admindashboard/bg1.png";
 import bg2 from "../assets/admindashboard/bg2.png";
 import { adminFetch } from "../services/adminAuth";
+import { API_BASE_URL } from "../config/api";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -69,8 +70,8 @@ interface Enquiry {
 /* Config – change routes / endpoints here                             */
 /* ------------------------------------------------------------------ */
 
-const API_URL = "http://localhost:5000/api/vehicles";
-const ENQUIRIES_API = "http://localhost:5000/api/enquiries";
+const API_URL = `${API_BASE_URL}/vehicles`;
+const ENQUIRIES_API = `${API_BASE_URL}/enquiries`;
 
 const ROUTES = {
   vehicles: "/admin/vehicles",
