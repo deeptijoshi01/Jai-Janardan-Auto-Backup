@@ -19,6 +19,7 @@ import {
   type VehicleStatus,
 } from "../types/vehicle";
 import { fetchBrands, fetchCategories } from "../services/categoryBrandApi";
+import { adminFetch } from "../services/adminAuth";
 import type { Brand, Category, VehicleCategoryType } from "../types/categoryBrand";
 
 interface VehicleResponse {
@@ -139,7 +140,7 @@ const VehicleDetails = ({ mode }: VehicleDetailsProps) => {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/${vehicle._id}/best-seller`, {
+      const response = await adminFetch(`${API_URL}/${vehicle._id}/best-seller`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isBestSeller }),
@@ -177,7 +178,7 @@ const VehicleDetails = ({ mode }: VehicleDetailsProps) => {
     setSaving(true);
     setError("");
     try {
-      const response = await fetch(`${API_URL}/${vehicle._id}`, {
+      const response = await adminFetch(`${API_URL}/${vehicle._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

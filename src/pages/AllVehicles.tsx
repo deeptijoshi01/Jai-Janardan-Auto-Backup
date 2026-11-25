@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import bg2 from "../assets/admindashboard/bg2.png";
+import { adminFetch } from "../services/adminAuth";
 import { getVehicleCategoryLabel, type Vehicle } from "../types/vehicle";
 
 interface VehiclesResponse {
@@ -95,7 +96,7 @@ const AllVehicles = () => {
     setDeletingId(vehicle._id);
     setError("");
     try {
-      const response = await fetch(`${API_URL}/${vehicle._id}`, {
+      const response = await adminFetch(`${API_URL}/${vehicle._id}`, {
         method: "DELETE",
       });
       const data = (await response.json()) as { success: boolean; message?: string };

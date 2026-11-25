@@ -21,6 +21,7 @@ import {
 
 import bg1 from "../assets/admindashboard/bg1.png";
 import bg2 from "../assets/admindashboard/bg2.png";
+import { adminFetch } from "../services/adminAuth";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -69,7 +70,7 @@ interface Enquiry {
 /* ------------------------------------------------------------------ */
 
 const API_URL = "http://localhost:5000/api/vehicles";
-const ENQUIRIES_API = "http://localhost:5000/api/enquiries"; // optional
+const ENQUIRIES_API = "http://localhost:5000/api/enquiries";
 
 const ROUTES = {
   vehicles: "/admin/vehicles",
@@ -199,13 +200,20 @@ const AdminDashboard = () => {
 
   const fetchEnquiries = async () => {
     try {
-      const res = await fetch(ENQUIRIES_API);
-      if (!res.ok) return;
-      const data = await res.json();
+      const res = await adminFetch(ENQUIRIES_API, { cache: "no-store" });
+      const data = (await res.json()) as {
+        success?: boolean;
+        message?: string;
+        enquiries?: Enquiry[];
+        data?: Enquiry[];
+      };
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Unable to load enquiries.");
+      }
       const list = data.enquiries ?? data.data ?? [];
       setEnquiries(Array.isArray(list) ? list.slice(0, 4) : []);
-    } catch {
-      /* enquiries are optional – keep the empty state */
+    } catch (enquiryError) {
+      console.error("Dashboard enquiries API error:", enquiryError);
     }
   };
 
@@ -245,7 +253,7 @@ const AdminDashboard = () => {
 
     try {
       setDeletingId(vehicle._id);
-      const res = await fetch(`${API_URL}/${vehicle._id}`, { method: "DELETE" });
+      const res = await adminFetch(`${API_URL}/${vehicle._id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setVehicles((prev) => prev.filter((v) => v._id !== vehicle._id));
     } catch {

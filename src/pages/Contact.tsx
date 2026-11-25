@@ -20,6 +20,8 @@ import heroImage from "../assets/heo-bg.png";
 
 // Contact form submit zalyavar enquiry ya number var WhatsApp madhe janar.
 const ENQUIRY_WHATSAPP = "8378913269";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 // Google Maps share link (Get Directions button sathi).
 const MAPS_URL = "https://maps.app.goo.gl/oU7sCXnYKYz47Guf9";
@@ -114,6 +116,7 @@ export default function Contact() {
   );
   const [sent, setSent] = useState(false);
   const [lastLink, setLastLink] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
 
   const fadeUp = (delay = 0) => ({
     initial: reduceMotion ? false : { opacity: 0, y: 20 },
@@ -145,7 +148,7 @@ export default function Contact() {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -162,10 +165,40 @@ export default function Contact() {
     );
     const link = waHref(ENQUIRY_WHATSAPP, text);
 
-    // Direct click handler madhech open kela mhanje mobile var block hot nahi.
-    const win = window.open(link, "_blank", "noopener,noreferrer");
-    if (!win) window.location.href = link;
+    // Open the tab during the user gesture so popup blockers do not suppress
+    // WhatsApp while the enquiry is being saved.
+    const whatsappWindow = window.open("about:blank", "_blank");
+    if (whatsappWindow) whatsappWindow.opener = null;
+    setSubmissionError("");
 
+    try {
+      const response = await fetch(`${API_BASE_URL}/enquiries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.fullName.trim(),
+          phone: form.phone.trim(),
+          interest: form.interest,
+          message: form.message.trim(),
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        message?: string;
+      } | null;
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || "Unable to save the enquiry.");
+      }
+      if (whatsappWindow) whatsappWindow.location.replace(link);
+      else window.location.assign(link);
+    } catch (error) {
+      console.error("Contact enquiry save failed:", error);
+      if (whatsappWindow) whatsappWindow.location.replace(link);
+      else window.location.assign(link);
+      setSubmissionError(
+        "WhatsApp was opened, but this enquiry could not be saved to the admin dashboard."
+      );
+    }
     setLastLink(link);
     setSent(true);
     setForm(initialForm);
@@ -437,6 +470,14 @@ export default function Contact() {
             noValidate
             className={`p-5 sm:p-8 ${cardClass}`}
           >
+            {submissionError && (
+              <p
+                role="alert"
+                className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+              >
+                {submissionError}
+              </p>
+            )}
             <div className="grid gap-5 sm:grid-cols-2">
               <label className={labelClass}>
                 Full Name <span className="text-[#b98f3f]">*</span>

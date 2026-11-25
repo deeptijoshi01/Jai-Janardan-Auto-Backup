@@ -11,19 +11,64 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
+const { getSmtpConfiguration } = require("./utils/smtpConfig");
+
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+const smtpConfiguration = getSmtpConfiguration();
+if (smtpConfiguration.missing?.length) {
+  console.warn(
+    `Password reset SMTP configuration missing: ${smtpConfiguration.missing.join(", ")}`
+  );
+} else if (smtpConfiguration.error) {
+  console.warn(`Password reset SMTP configuration error: ${smtpConfiguration.error}`);
+}
 
 const vehicleRoutes = require("./routes/vehicleRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const brandRoutes = require("./routes/brandRoutes");
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
+const enquiryRoutes = require("./routes/enquiryRoutes");
 const sellRequestRoutes = require("./routes/sellRequestRoutes");
+const { requireAdmin } = require("./middleware/requireAdmin");
 const { ensureCategoryBrandSeed } = require("./utils/categoryBrandSeed");
 
 // ======================================================
 // ENVIRONMENT
 // ======================================================
 
-dotenv.config({ path: path.join(__dirname, ".env") });
+const allowedOrigins = new Set();
+const configuredSameSite = (process.env.COOKIE_SAME_SITE || "lax").toLowerCase();
+if (!["strict", "lax", "none"].includes(configuredSameSite)) {
+  throw new Error("COOKIE_SAME_SITE must be strict, lax, or none.");
+}
+if (configuredSameSite === "none" && process.env.NODE_ENV !== "production") {
+  throw new Error("COOKIE_SAME_SITE=none requires production HTTPS.");
+}
+if (process.env.FRONTEND_URL) {
+  try {
+    allowedOrigins.add(new URL(process.env.FRONTEND_URL).origin);
+  } catch {
+    throw new Error("FRONTEND_URL must be a valid absolute URL.");
+  }
+}
+if (process.env.NODE_ENV !== "production") {
+  [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+  ].forEach((origin) => allowedOrigins.add(origin));
+} else {
+  if (!process.env.FRONTEND_URL) {
+    throw new Error("FRONTEND_URL must be configured in production.");
+  }
+  if (new URL(process.env.FRONTEND_URL).protocol !== "https:") {
+    throw new Error("FRONTEND_URL must use HTTPS in production.");
+  }
+}
 
 // MongoDB SRV DNS workaround
 dns.setServers(["8.8.8.8"]);
@@ -33,6 +78,7 @@ dns.setServers(["8.8.8.8"]);
 // ======================================================
 
 const app = express();
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 
 // ======================================================
 // MIDDLEWARE
@@ -40,7 +86,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: true,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error("Origin is not allowed by CORS."));
+    },
     credentials: true,
   })
 );
@@ -360,11 +409,7 @@ app.post(
 // Maximum: 8 images
 // ======================================================
 
-app.post(
-  "/api/upload-multiple",
-  uploadMultiple,
-
-  async (req, res) => {
+const uploadMultipleHandler = async (req, res) => {
     try {
       // --------------------------------------------------
       // CHECK FILES
@@ -503,7 +548,14 @@ app.post(
         },
       });
     }
-  }
+};
+
+app.post("/api/upload-multiple", uploadMultiple, uploadMultipleHandler);
+app.post(
+  "/api/admin/upload-multiple",
+  requireAdmin,
+  uploadMultiple,
+  uploadMultipleHandler
 );
 
 // ======================================================
@@ -516,7 +568,9 @@ app.use(
 );
 app.use("/api/categories", categoryRoutes);
 app.use("/api/brands", brandRoutes);
+app.use("/api/auth", adminAuthRoutes);
 app.use("/api/admin-auth", adminAuthRoutes);
+app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/sell-requests", sellRequestRoutes);
 
 // ======================================================

@@ -495,7 +495,7 @@ function ListingDialog({
       if (addedFiles.length) {
         const formData = new FormData();
         addedFiles.forEach((image) => formData.append("images", image.file as File));
-        const uploadResponse = await fetch("http://localhost:5000/api/upload-multiple", { method: "POST", body: formData });
+        const uploadResponse = await adminFetch("http://localhost:5000/api/admin/upload-multiple", { method: "POST", body: formData });
         const uploadData = (await uploadResponse.json().catch(() => null)) as { success?: boolean; message?: string; images?: SellImage[] } | null;
         if (!uploadResponse.ok || !uploadData?.success || !Array.isArray(uploadData.images) || uploadData.images.length !== addedFiles.length) {
           throw new Error(uploadData?.message || "Unable to upload listing images.");

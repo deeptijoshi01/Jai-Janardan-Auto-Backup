@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchBrands, fetchCategories } from "../services/categoryBrandApi";
+import { adminFetch } from "../services/adminAuth";
 import {
   brandCategoryTypeFor,
   type Brand,
@@ -371,7 +372,7 @@ const AddVehicle = () => {
     setCategoryBrandError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/brands`, {
+      const response = await adminFetch(`${API_BASE_URL}/api/brands`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -775,7 +776,7 @@ const AddVehicle = () => {
         formData.append("images", image.file);
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/upload-multiple`, {
+      const response = await adminFetch(`${API_BASE_URL}/api/admin/upload-multiple`, {
         method: "POST",
         body: formData,
       });
@@ -911,7 +912,7 @@ const AddVehicle = () => {
       // Save to MongoDB
       // -----------------------------------------------
 
-      const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
+      const response = await adminFetch(`${API_BASE_URL}/api/vehicles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

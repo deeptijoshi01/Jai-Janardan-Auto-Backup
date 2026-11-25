@@ -1,86 +1,56 @@
 const crypto = require("crypto");
+const AdminUser = require("../models/AdminUser");
+const AdminSession = require("../models/AdminSession");
 
-const TOKEN_LIFETIME_SECONDS = 8 * 60 * 60;
+const isProduction = process.env.NODE_ENV === "production";
+const cookieName = isProduction ? "__Host-jja_admin" : "jja_admin";
 
-const sessionSecret = () => process.env.ADMIN_SESSION_SECRET || "";
-
-const createAdminToken = (email) => {
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const payload = Buffer.from(
-    JSON.stringify({
-      sub: email,
-      role: "admin",
-      iat: issuedAt,
-      exp: issuedAt + TOKEN_LIFETIME_SECONDS,
-    })
-  ).toString("base64url");
-  const signature = crypto
-    .createHmac("sha256", sessionSecret())
-    .update(payload)
-    .digest("base64url");
-
-  return `${payload}.${signature}`;
+const readSessionCookie = (req) => {
+  const cookieHeader = req.headers.cookie || "";
+  const cookie = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${cookieName}=`));
+  return cookie ? cookie.slice(cookieName.length + 1) : "";
 };
 
-const requireAdmin = (req, res, next) => {
-  if (sessionSecret().length < 32) {
-    return res.status(503).json({
-      success: false,
-      message: "Admin session verification is not configured.",
-    });
-  }
+const hashSessionToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
-  const token = req.get("authorization")?.replace(/^Bearer\s+/i, "");
-  const [payload, suppliedSignature, extra] = (token || "").split(".");
-  if (!payload || !suppliedSignature || extra) {
+const requireAdmin = async (req, res, next) => {
+  const token = readSessionCookie(req);
+  if (!/^[a-f0-9]{64}$/i.test(token)) {
     return res.status(401).json({
       success: false,
       message: "Admin sign-in is required.",
     });
   }
 
-  const expectedSignature = crypto
-    .createHmac("sha256", sessionSecret())
-    .update(payload)
-    .digest();
-  let actualSignature;
-  try {
-    actualSignature = Buffer.from(suppliedSignature, "base64url");
-  } catch {
-    actualSignature = Buffer.alloc(0);
-  }
-
-  if (
-    actualSignature.length !== expectedSignature.length ||
-    !crypto.timingSafeEqual(actualSignature, expectedSignature)
-  ) {
+  const session = await AdminSession.findOne({
+    tokenHash: hashSessionToken(token),
+    expiresAt: { $gt: new Date() },
+  }).lean();
+  if (!session) {
     return res.status(401).json({
       success: false,
-      message: "Admin session is invalid. Please sign in again.",
+      message: "Admin session has expired. Please sign in again.",
     });
   }
 
-  try {
-    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (
-      claims.role !== "admin" ||
-      typeof claims.sub !== "string" ||
-      !Number.isFinite(claims.exp) ||
-      claims.exp <= Math.floor(Date.now() / 1000)
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Admin session has expired. Please sign in again.",
-      });
-    }
-    req.admin = { email: claims.sub };
-    return next();
-  } catch {
+  const user = await AdminUser.findById(session.userId)
+    .select("_id fullName name email role profileImage")
+    .lean();
+  if (!user || !["admin", "staff"].includes(user.role)) {
+    await AdminSession.deleteOne({ _id: session._id });
     return res.status(401).json({
       success: false,
-      message: "Admin session is invalid. Please sign in again.",
+      message: "Admin sign-in is required.",
     });
   }
+
+  req.admin = user;
+  req.adminSession = session;
+  return next();
 };
 
-module.exports = { createAdminToken, requireAdmin };
+module.exports = { cookieName, hashSessionToken, requireAdmin };

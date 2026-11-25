@@ -14,6 +14,11 @@ The seed script creates a batch of realistic commercial-vehicle listings and mar
 
 ## Local front-end and API
 
+The frontend uses `VITE_API_BASE_URL` for authentication API calls. Copy the
+root `.env.example` to `.env` when the API is not at the local default, and set
+it to the API base URL ending in `/api`. Configure the matching frontend origin
+as `FRONTEND_URL` in `backend/.env`.
+
 ```bash
 npm install
 npm run dev
@@ -29,24 +34,52 @@ from **Admin → Sell Requests**. Requests can be approved for later manual
 listing, published directly, or rejected. Published vehicles use the existing
 Vehicle collection and public inventory APIs.
 
-Admin sign-in and Sell Requests administration require these backend-only
-variables in `backend/.env`:
+## Admin authentication and password recovery
 
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET` (at least 32 characters; generate a random value and
-  never expose it in frontend code)
+Copy `backend/.env.example` to `backend/.env` and configure `MONGO_URI`,
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_NAME` for the initial admin account.
+On its first successful sign-in, the existing configured admin account is
+created once in MongoDB with a bcrypt password hash. Existing bcrypt hashes
+are verified directly, and earlier scrypt hashes remain supported. Later
+sign-ins are verified against the stored hash; changing environment
+credentials does not overwrite an existing account or its password. Existing
+browser sessions need to sign in again after this cookie-session migration.
 
-Generate a signing secret from the project root with:
+Admin sessions are opaque, revocable MongoDB-backed sessions in HTTP-only
+cookies. Remember Me sets a 30-day cookie; otherwise the browser receives a
+session cookie. Sessions expire server-side after 30 days or 12 hours,
+respectively. Resetting a password invalidates all active sessions for that
+account. MongoDB automatically creates the unique admin-email index and the
+TTL index for expired sessions when the models are first used. No existing
+vehicle or sell-request records need to be migrated.
 
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+Password reset email requires all of `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+`SMTP_PASS`, `MAIL_FROM`, and `FRONTEND_URL`. The backend reports a clear
+configuration error until these are set; it never reports a reset email sent
+when SMTP is unavailable. Use an SMTP provider's TLS configuration in
+production and an HTTPS `FRONTEND_URL`. Set `COOKIE_SAME_SITE=none` only when
+the production frontend and API are on different sites; cookies are Secure in
+production and HTTPS is required.
 
-After setting them, restart the backend. Admin credentials are checked by the
-backend and the resulting short-lived signed session is required for every
-Sell Requests administration endpoint. Public owners only have access to
-creating a request.
+The contact form continues to open its WhatsApp handoff and now also persists
+valid customer enquiries through `POST /api/enquiries`. The authenticated
+dashboard and Enquiries page read those records through `GET /api/enquiries`;
+status changes, if used, are protected by the same admin session.
+
+Additional admin/staff users can be created without duplicating an email by
+setting `NEW_ADMIN_EMAIL`, `NEW_ADMIN_NAME`, `NEW_ADMIN_PASSWORD` (at least 12
+characters and no more than 72 UTF-8 bytes), and optionally
+`NEW_ADMIN_ROLE=admin` or `staff` in `backend/.env`, then running
+`npm run admin:create` from the backend directory. Remove those temporary
+`NEW_ADMIN_*` values from the environment after provisioning. The user model
+preserves each account's name, email, role, and optional profile image.
+
+`POST /api/auth/login`, `/forgot-password`, `/reset-password`, `/logout`, and
+`GET /api/auth/me` are the authentication endpoints. The former
+`/api/admin-auth` route remains available for compatibility. Admin vehicle,
+brand, upload, and Sell Requests mutations require an authenticated session;
+public inventory reads, vehicle image submissions, and public Sell Your
+Vehicle submissions remain available.
 
 ## Vehicle categories and brands
 

@@ -16,7 +16,7 @@ import {
 
 import heroBg from "../assets/heo-bg.png";
 import logo from "../assets/logo.png";
-import { storeAdminSession } from "../services/adminAuth";
+import { loginAdmin } from "../services/adminAuth";
 
 /* Tokens: ink #0f0e0c · gold #c9a050 · light gold #e0b866 */
 
@@ -65,6 +65,7 @@ const labelCls =
 
 const inputCls =
   "jj-input peer h-14 w-full rounded-2xl border border-white/20 bg-white/[0.07] px-4 pt-5 text-base text-white outline-none transition placeholder-transparent focus:border-[#e0b866]/70 focus:bg-white/[0.12] focus:ring-4 focus:ring-[#e0b866]/10";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -88,27 +89,18 @@ const AdminLogin = () => {
     if (loading || success) return;
     setError("");
 
-    if (!email.trim() || !password.trim()) {
+    if (
+      !EMAIL_PATTERN.test(email.trim()) ||
+      email.trim().length > 254 ||
+      !password.trim()
+    ) {
       fail("Enter your email and password to continue.");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/admin-auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-      const data = (await response.json().catch(() => null)) as {
-        success?: boolean;
-        message?: string;
-        token?: string;
-      } | null;
-      if (!response.ok || !data?.success || !data.token) {
-        throw new Error(data?.message || "Unable to sign in.");
-      }
-      storeAdminSession(data.token, rememberMe);
+      await loginAdmin(email.trim(), password, rememberMe);
       setSuccess(true);
       setTimeout(() => navigate("/admin"), 500);
     } catch (loginError) {
@@ -258,12 +250,12 @@ const AdminLogin = () => {
                 />
                 <span className="text-sm text-white/75">Remember me</span>
               </label>
-              <button
-                type="button"
+              <Link
+                to="/admin/forgot-password"
                 className="min-h-[44px] text-sm font-semibold text-[#e0b866] transition hover:text-[#f3d794]"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             <button
